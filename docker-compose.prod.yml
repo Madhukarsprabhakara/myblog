@@ -1,0 +1,74 @@
+version: '3.8'
+
+networks:
+  personalblog:
+    name: personalblog
+volumes:
+  certbot-etc:
+  wordpress:
+  db-data:
+services:
+  mydb:
+    image: mariadb:10.6.18
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./db-data:/var/lib/mysql
+    networks:
+      - personalblog
+  wordpress:
+    depends_on:
+      - mydb
+    image: wordpress:6.6-fpm-alpine
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: ${MYSQL_HOST}
+      WORDPRESS_DB_USER: ${MYSQL_USER}
+      WORDPRESS_DB_PASSWORD: ${MYSQL_PASSWORD}
+      WORDPRESS_DB_NAME:  ${MYSQL_DATABASE}
+    volumes:
+      - ./wordpress:/var/www/html
+    networks:
+      - personalblog
+  
+  wpphp:
+    build:
+      context: .
+      dockerfile: php.dockerfile
+    container_name: wpphp
+    volumes:
+      - ./wordpress:/var/www/html
+    networks:
+      - personalblog
+
+  wp-nginx:
+    depends_on:
+      - wordpress
+    build:
+      context: .
+      dockerfile: nginx.prod.dockerfile
+    container_name: wp-nginx
+    restart: unless-stopped
+    ports:
+      - 80:80
+      - 443:443 
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    networks:
+      - personalblog
+  wpcertbot:
+    depends_on:
+      - wp-nginx
+    image: certbot/certbot
+    container_name: wpcertbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    
+
+
