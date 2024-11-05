@@ -34,6 +34,7 @@ services:
       WORDPRESS_DB_NAME:  ${MYSQL_DATABASE}
     volumes:
       - ./wordpress:/var/www/html
+      - ./uploads:/var/www/html/wp-content/uploads
     networks:
       - personalblog
   
