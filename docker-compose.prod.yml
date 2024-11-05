@@ -23,7 +23,9 @@ services:
   wordpress:
     depends_on:
       - mydb
-    image: wordpress:6.6-fpm-alpine
+    build:
+      context: .
+      dockerfile: wordpress.prod.dockerfile
     restart: always
     environment:
       WORDPRESS_DB_HOST: ${MYSQL_HOST}
